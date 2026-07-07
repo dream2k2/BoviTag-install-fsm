@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BoviCare Install</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+:root{
+  --green:#1B5E3B; --green-dk:#134429; --tag:#F5B800; --tag-dk:#C99700;
+  --bg:#F2F4F1; --card:#FFFFFF; --line:#DDE3DC; --txt:#20291F; --sub:#6B7568;
+  --red:#C0392B; --blue:#2563EB;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic','Noto Sans KR','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--txt);font-size:15px;padding-bottom:40px}
+.wrap{max-width:520px;margin:0 auto}
+
+/* header */
+header{background:var(--green);color:#fff;padding:10px 14px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.logo{font-weight:800;font-size:18px;letter-spacing:.3px}
+.logo span{color:var(--tag)}
+.langs{display:flex;gap:4px}
+.langs button{background:rgba(255,255,255,.14);border:none;color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;font-weight:600}
+.langs button.on{background:var(--tag);color:#20291F}
+.gear{background:none;border:none;color:#fff;font-size:19px;padding:2px 6px}
+
+/* farm panel */
+.farm{background:var(--card);border-bottom:1px solid var(--line);padding:12px 14px}
+.frow{display:flex;gap:8px;margin-bottom:8px}
+.frow label{flex:0 0 78px;font-size:12px;color:var(--sub);align-self:center;font-weight:600}
+.frow input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;min-width:0}
+.filebar{display:flex;gap:8px;align-items:center;margin-top:4px}
+.btn{border:none;border-radius:9px;padding:10px 14px;font-size:14px;font-weight:700;color:#fff;background:var(--green)}
+.btn.sm{padding:8px 12px;font-size:13px}
+.btn.gray{background:#8B958A}
+.btn.yellow{background:var(--tag);color:#20291F}
+.btn.red{background:var(--red)}
+.btn.blue{background:var(--blue)}
+.btn:disabled{opacity:.4}
+#fileInfo{font-size:12px;color:var(--sub);flex:1}
+.counts{display:flex;gap:8px;margin-top:10px}
+.cbox{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}
+.cbox b{display:block;font-size:20px;color:var(--green)}
+.cbox span{font-size:11px;color:var(--sub)}
+
+/* tabs */
+.tabs{display:flex;background:var(--card);border-bottom:2px solid var(--line)}
+.tabs button{flex:1;background:none;border:none;padding:12px;font-size:15px;font-weight:700;color:var(--sub);border-bottom:3px solid transparent}
+.tabs button.on{color:var(--green);border-bottom-color:var(--tag)}
+
+/* sections */
+.sec{background:var(--card);margin:10px 10px 0;border:1px solid var(--line);border-radius:14px;padding:12px;position:relative}
+.tagbadge{display:inline-flex;align-items:center;background:var(--tag);color:#20291F;font-weight:800;font-size:12px;padding:4px 12px 4px 8px;border-radius:6px 14px 14px 6px;position:relative;margin-bottom:6px}
+.tagbadge::before{content:'';width:7px;height:7px;background:var(--card);border-radius:50%;margin-right:7px;box-shadow:inset 0 0 0 1.5px var(--tag-dk)}
+.guide{font-size:13px;color:var(--sub);margin-bottom:10px;line-height:1.5}
+.duo{display:flex;gap:10px}
+.photoBox{flex:1;aspect-ratio:4/3;background:var(--bg);border:1.5px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--sub);font-size:12px;text-align:center;padding:4px}
+.photoBox img{width:100%;height:100%;object-fit:cover}
+.resBox{flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.resVal{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;font-weight:700;min-height:38px;word-break:break-all}
+.resVal.ok{border-color:var(--green);background:#EBF4EE;color:var(--green-dk)}
+.resVal.bad{border-color:var(--red);background:#FBEDEB;color:var(--red)}
+.resVal small{display:block;font-weight:500;font-size:11px;color:var(--sub)}
+.smsg{font-size:12px;min-height:16px}
+.smsg.err{color:var(--red)} .smsg.ok{color:var(--green)}
+.manual{margin-top:8px;position:relative}
+.manual input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:14px}
+.sugs{position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:0 0 10px 10px;z-index:30;max-height:180px;overflow:auto;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.sugs div{padding:9px 10px;border-bottom:1px solid var(--bg);font-size:13px}
+.sugs div b{color:var(--green)}
+.rowbtns{display:flex;gap:8px;margin-top:8px}
+#completeBar{margin:14px 10px 0}
+#btnComplete{width:100%;padding:15px;font-size:17px;border-radius:12px}
+
+/* manage */
+.mtools{display:flex;gap:6px;margin:10px 10px 0;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--bg);color:var(--sub);padding:7px 4px;text-align:left;font-size:11px;border-bottom:1px solid var(--line)}
+td{padding:8px 4px;border-bottom:1px solid var(--bg);vertical-align:middle;word-break:break-all}
+td .ic{background:none;border:none;font-size:17px;padding:2px 4px}
+.editIn{width:100%;border:1px solid var(--tag);border-radius:6px;padding:5px;font-size:12px}
+.pager{display:flex;justify-content:center;gap:6px;align-items:center;margin:12px 0}
+.pager button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;font-size:14px}
+.pager span{font-size:12px;color:var(--sub);min-width:60px;text-align:center}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow:auto;padding:16px}
+.modal h3{font-size:16px;margin-bottom:10px;color:var(--green-dk)}
+.modal img{width:100%;border-radius:10px;margin-bottom:8px}
+.modal .mrow{font-size:13px;padding:5px 0;border-bottom:1px solid var(--bg)}
+.modal .mrow b{color:var(--sub);font-weight:600;font-size:12px;display:inline-block;min-width:90px}
+.cand{padding:11px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;font-size:13px}
+.cand b{color:var(--green)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#20291F;color:#fff;padding:11px 18px;border-radius:24px;font-size:13px;z-index:200;display:none;max-width:90%;text-align:center}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--tag);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="topbar">
+    <div class="logo">Bovi<span>Care</span> <small style="font-weight:500;font-size:11px;opacity:.85" data-i18n="appSub"></small></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="langs">
+        <button data-lang="en">EN</button><button data-lang="es">ES</button>
+        <button data-lang="ko">한</button><button data-lang="zh">中</button>
+      </div>
+      <button class="gear" onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+</header>
+
+<!-- 공용 상단: 농장 정보 -->
+<div class="farm">
+  <div class="frow"><label data-i18n="farmName"></label><input id="farmName"><label data-i18n="subName" style="flex-basis:52px"></label><input id="subName" style="flex:.7"></div>
+  <div class="frow"><label data-i18n="address"></label><input id="address" data-i18n-ph="addressPh"></div>
+  <div class="frow"><label data-i18n="workDate"></label><input id="workDate" type="date" style="flex:.8"><div style="flex:1"></div></div>
+  <div class="filebar">
+    <button class="btn sm yellow" onclick="document.getElementById('csvFile').click()" data-i18n="loadFile"></button>
+    <input type="file" id="csvFile" accept=".csv,.xlsx,.xls">
+    <div id="fileInfo" data-i18n="noFile"></div>
+  </div>
+  <div class="counts">
+    <div class="cbox"><b id="cntToday">0</b><span data-i18n="installedToday"></span></div>
+    <div class="cbox"><b id="cntTotal">0</b><span data-i18n="installedTotal"></span></div>
+    <div class="cbox"><b id="cntAnimals">-</b><span data-i18n="animalCount"></span></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button id="tabInstall" class="on" onclick="showTab('install')">📷 <span data-i18n="tabInstall"></span></button>
+  <button id="tabManage" onclick="showTab('manage')">📋 <span data-i18n="tabManage"></span></button>
+</div>
+
+<!-- ============ 장착 화면 ============ -->
+<div id="pgInstall">
+  <!-- 객체 영역 -->
+  <div class="sec">
+    <div class="tagbadge"><span data-i18n="step1"></span></div>
+    <div class="guide" data-i18n="step1Guide"></div>
+    <div class="duo">
+      <div class="photoBox" id="animalPhotoBox" onclick="document.getElementById('animalCam').click()" data-i18n="tapToShoot"></div>
+      <div class="resBox">
+        <div class="resVal" id="animalRes"><span data-i18n="animalNo"></span></div>
+        <div class="smsg" id="animalMsg"></div>
+      </div>
+    </div>
+    <input type="file" id="animalCam" accept="image/*" capture="environment">
+    <div class="rowbtns">
+      <button class="btn sm" onclick="document.getElementById('animalCam').click()">📷 <span data-i18n="shoot"></span></button>
+      <button class="btn sm gray" onclick="toggleManual('animal')" data-i18n="manualInput"></button>
+    </div>
+    <div class="manual hidden" id="animalManual">
+      <input id="animalSearch" data-i18n-ph="searchPh" autocomplete="off">
+      <div class="sugs hidden" id="animalSugs"></div>
+    </div>
+  </div>
+
+  <!-- 디바이스 영역 -->
+  <div class="sec">
+    <div class="tagbadge"><span data-i18n="step2"></span></div>
+    <div class="guide" data-i18n="step2Guide"></div>
+    <div class="duo">
+      <div class="photoBox" id="devicePhotoBox" onclick="document.getElementById('deviceCam').click()" data-i18n="tapToShoot"></div>
+      <div class="resBox">
+        <div class="resVal" id="deviceRes"><span data-i18n="deviceMac"></span></div>
+        <div class="smsg" id="deviceMsg"></div>
+      </div>
+    </div>
+    <input type="file" id="deviceCam" accept="image/*" capture="environment">
+    <div class="rowbtns">
+      <button class="btn sm" onclick="document.getElementById('deviceCam').click()">📷 <span data-i18n="shoot"></span></button>
+      <button class="btn sm gray" onclick="toggleManual('device')" data-i18n="manualInput"></button>
+    </div>
+    <div class="manual hidden" id="deviceManual">
+      <input id="deviceInput" data-i18n-ph="macPh" autocomplete="off">
+      <div class="rowbtns"><button class="btn sm blue" onclick="applyDeviceManual()" data-i18n="apply"></button></div>
+    </div>
+  </div>
+
+  <div id="completeBar">
+    <button class="btn" id="btnComplete" onclick="saveRecord()" disabled>✓ <span data-i18n="complete"></span></button>
+  </div>
+</div>
+
+<!-- ============ 관리 화면 ============ -->
+<div id="pgManage" class="hidden">
+  <div class="mtools">
+    <button class="btn sm blue" onclick="exportJSON()" data-i18n="exportJson"></button>
+    <button class="btn sm blue" onclick="exportCSV()" data-i18n="exportCsv"></button>
+    <button class="btn sm gray" onclick="document.getElementById('importFile').click()" data-i18n="importJson"></button>
+    <input type="file" id="importFile" accept=".json">
+  </div>
+  <div class="sec">
+    <table>
+      <thead><tr>
+        <th style="width:26px" data-i18n="colNo"></th><th data-i18n="colDateTime"></th>
+        <th data-i18n="colAnimal"></th><th data-i18n="colDevice"></th><th style="width:78px"></th>
+      </tr></thead>
+      <tbody id="recBody"></tbody>
+    </table>
+    <div class="pager">
+      <button onclick="goPage('first')">⏮</button><button onclick="goPage('prev')">◀</button>
+      <span id="pageInfo">-</span>
+      <button onclick="goPage('next')">▶</button><button onclick="goPage('last')">⏭</button>
+    </div>
+  </div>
+</div>
+</div><!-- wrap -->
+
+<!-- 상세보기 팝업 -->
+<div class="overlay" id="ovDetail">
+  <div class="modal">
+    <h3 data-i18n="detail"></h3>
+    <div id="detailBody"></div>
+    <button class="btn" style="width:100%;margin-top:10px" onclick="closeOv('ovDetail')">↩ <span data-i18n="back"></span></button>
+  </div>
+</div>
+
+<!-- 후보 선택 팝업 -->
+<div class="overlay" id="ovCand">
+  <div class="modal">
+    <h3 data-i18n="selectCandidate"></h3>
+    <div id="candBody"></div>
+    <button class="btn gray" style="width:100%;margin-top:6px" onclick="closeOv('ovCand')" data-i18n="close"></button>
+  </div>
+</div>
+
+<!-- 설정 팝업 -->
+<div class="overlay" id="ovSettings">
+  <div class="modal">
+    <h3 data-i18n="settings"></h3>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:6px" data-i18n="apiKeyHint"></div>
+    <input id="apiKeyInput" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px" placeholder="Google Cloud Vision API Key">
+    <div class="rowbtns">
+      <button class="btn" style="flex:1" onclick="saveSettings()" data-i18n="save"></button>
+      <button class="btn gray" style="flex:1" onclick="closeOv('ovSettings')" data-i18n="close"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= i18n ================= */
+const I18N = {
+en:{appSub:"Device Install",farmName:"Farm",subName:"Sub",address:"Address",addressPh:"Optional",workDate:"Date",
+loadFile:"Load animal file",noFile:"No file (optional) · CSV/XLSX",fileLoaded:n=>`${n} animals loaded`,
+installedToday:"Today installed",installedTotal:"Total installed",animalCount:"Animals in file",
+tabInstall:"Install",tabManage:"Manage",
+step1:"STEP 1 · ANIMAL",step1Guide:"Take a photo of the animal so the ear tag and face are clearly visible.",
+step2:"STEP 2 · DEVICE",step2Guide:"Take a photo of the device so the QR code is clearly visible.",
+tapToShoot:"Tap to take photo",shoot:"Shoot",manualInput:"Manual input",apply:"Apply",
+animalNo:"Animal No.",deviceMac:"Device MAC",searchPh:"Search ID / management no.",macPh:"Enter MAC or QR text",
+recognizing:"Recognizing...",recogOk:"Recognized",recogFail:"Recognition failed. Retake or enter manually.",
+notInCsv:"⚠ Not found in the loaded animal file!",noCsvNote:"No file loaded – value accepted without check.",
+qrFail:"QR not detected. Retake or enter manually.",dupDevice:"⚠ This device is already registered!",
+complete:"Complete & Save",saved:"Saved!",apiKeyMissing:"No OCR API key. Set it in ⚙ or enter manually.",
+exportJson:"Save (JSON)",exportCsv:"Export CSV",importJson:"Load (JSON)",importConfirm:"Add records from this file?",
+colNo:"#",colDateTime:"Date / Time",colAnimal:"Animal No.",colDevice:"Device",
+detail:"Detail",back:"Back",close:"Close",confirmDel:"Delete this record?",update:"Update",updated:"Updated",
+selectCandidate:"Select the matching animal",settings:"Settings",save:"Save",
+apiKeyHint:"Google Cloud Vision API key for ear-tag OCR (stored on this phone only).",
+animalPhotoL:"Animal photo",devicePhotoL:"Device photo",mgmtNoL:"Mgmt No.",empty:"No records yet."},
+es:{appSub:"Instalación",farmName:"Granja",subName:"Sub",address:"Dirección",addressPh:"Opcional",workDate:"Fecha",
+loadFile:"Cargar archivo",noFile:"Sin archivo (opcional) · CSV/XLSX",fileLoaded:n=>`${n} animales cargados`,
+installedToday:"Instalados hoy",installedTotal:"Total instalados",animalCount:"Animales en archivo",
+tabInstall:"Instalar",tabManage:"Gestión",
+step1:"PASO 1 · ANIMAL",step1Guide:"Tome una foto del animal de modo que el arete y la cara sean claramente visibles.",
+step2:"PASO 2 · DISPOSITIVO",step2Guide:"Tome una foto del dispositivo de modo que el código QR sea claramente visible.",
+tapToShoot:"Toque para fotografiar",shoot:"Foto",manualInput:"Entrada manual",apply:"Aplicar",
+animalNo:"Nº animal",deviceMac:"MAC dispositivo",searchPh:"Buscar ID / nº de manejo",macPh:"Ingrese MAC o texto QR",
+recognizing:"Reconociendo...",recogOk:"Reconocido",recogFail:"Fallo de reconocimiento. Repita o ingrese manualmente.",
+notInCsv:"⚠ ¡No se encuentra en el archivo cargado!",noCsvNote:"Sin archivo – valor aceptado sin verificación.",
+qrFail:"QR no detectado. Repita o ingrese manualmente.",dupDevice:"⚠ ¡Este dispositivo ya está registrado!",
+complete:"Completar y guardar",saved:"¡Guardado!",apiKeyMissing:"Sin clave OCR. Configúrela en ⚙ o ingrese manualmente.",
+exportJson:"Guardar (JSON)",exportCsv:"Exportar CSV",importJson:"Cargar (JSON)",importConfirm:"¿Agregar registros de este archivo?",
+colNo:"#",colDateTime:"Fecha / Hora",colAnimal:"Nº animal",colDevice:"Dispositivo",
+detail:"Detalle",back:"Volver",close:"Cerrar",confirmDel:"¿Eliminar este registro?",update:"Actualizar",updated:"Actualizado",
+selectCandidate:"Seleccione el animal correspondiente",settings:"Ajustes",save:"Guardar",
+apiKeyHint:"Clave de Google Cloud Vision para OCR del arete (se guarda solo en este teléfono).",
+animalPhotoL:"Foto animal",devicePhotoL:"Foto dispositivo",mgmtNoL:"Nº manejo",empty:"Sin registros."},
+ko:{appSub:"디바이스 장착",farmName:"농장명",subName:"보조명",address:"주소",addressPh:"선택 입력",workDate:"작업일자",
+loadFile:"개체 파일 불러오기",noFile:"파일 없음 (생략 가능) · CSV/XLSX",fileLoaded:n=>`개체 ${n}두 로딩됨`,
+installedToday:"오늘 장착",installedTotal:"총 장착",animalCount:"파일 내 개체수",
+tabInstall:"장착",tabManage:"관리",
+step1:"1단계 · 객체",step1Guide:"장착할 객체의 관리귀표와 얼굴이 잘 보이도록 촬영하세요.",
+step2:"2단계 · 디바이스",step2Guide:"장착할 디바이스의 QR코드가 잘 보이도록 촬영하세요.",
+tapToShoot:"눌러서 촬영",shoot:"촬영",manualInput:"수동 입력",apply:"적용",
+animalNo:"객체번호",deviceMac:"디바이스 MAC",searchPh:"식별번호 / 관리번호 검색",macPh:"MAC 또는 QR 내용 입력",
+recognizing:"인식 중...",recogOk:"인식 완료",recogFail:"인식 실패. 다시 촬영하거나 수동 입력하세요.",
+notInCsv:"⚠ 로딩된 개체 파일에 없는 번호입니다!",noCsvNote:"파일 미로딩 – 확인 없이 등록됩니다.",
+qrFail:"QR 인식 실패. 다시 촬영하거나 수동 입력하세요.",dupDevice:"⚠ 이미 등록된 디바이스입니다!",
+complete:"완료 · 저장",saved:"저장되었습니다!",apiKeyMissing:"OCR API 키가 없습니다. ⚙에서 설정하거나 수동 입력하세요.",
+exportJson:"저장 (JSON)",exportCsv:"CSV 내보내기",importJson:"불러오기 (JSON)",importConfirm:"이 파일의 기록을 추가할까요?",
+colNo:"순번",colDateTime:"날짜 / 시간",colAnimal:"객체번호",colDevice:"디바이스",
+detail:"상세보기",back:"돌아가기",close:"닫기",confirmDel:"이 항목을 삭제할까요?",update:"수정",updated:"수정되었습니다",
+selectCandidate:"해당 개체를 선택하세요",settings:"설정",save:"저장",
+apiKeyHint:"귀표 OCR용 Google Cloud Vision API 키 (이 폰에만 저장됩니다).",
+animalPhotoL:"객체 사진",devicePhotoL:"디바이스 사진",mgmtNoL:"관리번호",empty:"기록이 없습니다."},
+zh:{appSub:"设备安装",farmName:"牧场名",subName:"副名",address:"地址",addressPh:"可选填写",workDate:"作业日期",
+loadFile:"加载牛只文件",noFile:"无文件（可省略）· CSV/XLSX",fileLoaded:n=>`已加载 ${n} 头牛`,
+installedToday:"今日安装",installedTotal:"累计安装",animalCount:"文件内牛只数",
+tabInstall:"安装",tabManage:"管理",
+step1:"第1步 · 牛只",step1Guide:"拍摄牛只照片，确保耳标和面部清晰可见。",
+step2:"第2步 · 设备",step2Guide:"拍摄设备照片，确保二维码清晰可见。",
+tapToShoot:"点击拍照",shoot:"拍照",manualInput:"手动输入",apply:"应用",
+animalNo:"牛只编号",deviceMac:"设备 MAC",searchPh:"搜索识别号 / 管理号",macPh:"输入 MAC 或二维码内容",
+recognizing:"识别中...",recogOk:"识别成功",recogFail:"识别失败，请重拍或手动输入。",
+notInCsv:"⚠ 加载的文件中不存在该编号！",noCsvNote:"未加载文件 – 不做校验直接登记。",
+qrFail:"二维码识别失败，请重拍或手动输入。",dupDevice:"⚠ 该设备已被登记！",
+complete:"完成 · 保存",saved:"已保存！",apiKeyMissing:"未设置 OCR API 密钥。请在 ⚙ 中设置或手动输入。",
+exportJson:"保存 (JSON)",exportCsv:"导出 CSV",importJson:"载入 (JSON)",importConfirm:"要添加此文件中的记录吗？",
+colNo:"序号",colDateTime:"日期 / 时间",colAnimal:"牛只编号",colDevice:"设备",
+detail:"详情",back:"返回",close:"关闭",confirmDel:"确定删除该记录？",update:"修改",updated:"已修改",
+selectCandidate:"请选择对应的牛只",settings:"设置",save:"保存",
+apiKeyHint:"用于耳标 OCR 的 Google Cloud Vision API 密钥（仅保存在本手机）。",
+animalPhotoL:"牛只照片",devicePhotoL:"设备照片",mgmtNoL:"管理号",empty:"暂无记录。"}
+};
+let LANG = localStorage.getItem('bc_lang') || (navigator.language.startsWith('ko')?'ko':navigator.language.startsWith('zh')?'zh':navigator.language.startsWith('es')?'es':'en');
+function T(k){const v=I18N[LANG][k];return v===undefined?k:v}
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=T(el.dataset.i18n)});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=T(el.dataset.i18nPh)});
+  document.querySelectorAll('.langs button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  updateFileInfo(); renderList();
+}
+document.querySelectorAll('.langs button').forEach(b=>b.onclick=()=>{LANG=b.dataset.lang;localStorage.setItem('bc_lang',LANG);applyLang()});
+
+/* ================= 상태 ================= */
+let animals=[];            // {id:'KOR-002-...', idDigits:'002...', mgmt:'제주20-...'}
+let records=[];            // IndexedDB 캐시
+let cur={aPhoto:null,aId:'',aMgmt:'',dPhoto:null,dMac:''};
+let page=1; const PAGE=8;
+let editingId=null;
+
+/* ================= IndexedDB ================= */
+let db;
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('bovicare_install',1);
+  r.onupgradeneeded=e=>{e.target.result.createObjectStore('records',{keyPath:'id',autoIncrement:true})};
+  r.onsuccess=e=>{db=e.target.result;res()}; r.onerror=rej;
+})}
+function dbAll(){return new Promise(res=>{const o=[];const c=db.transaction('records').objectStore('records').openCursor();
+  c.onsuccess=e=>{const cu=e.target.result;if(cu){o.push(cu.value);cu.continue()}else res(o)}})}
+function dbAdd(rec){return new Promise(res=>{const r=db.transaction('records','readwrite').objectStore('records').add(rec);r.onsuccess=e=>res(e.target.result)})}
+function dbPut(rec){return new Promise(res=>{db.transaction('records','readwrite').objectStore('records').put(rec).onsuccess=res})}
+function dbDel(id){return new Promise(res=>{db.transaction('records','readwrite').objectStore('records').delete(id).onsuccess=res})}
+
+/* ================= 초기화 ================= */
+window.onload=async()=>{
+  await openDB(); records=await dbAll();
+  document.getElementById('workDate').value=new Date().toISOString().slice(0,10);
+  ['farmName','subName','address'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.value=localStorage.getItem('bc_'+id)||'';
+    el.oninput=()=>localStorage.setItem('bc_'+id,el.value);
+  });
+  document.getElementById('apiKeyInput').value=localStorage.getItem('bc_apikey')||'';
+  const savedCsv=localStorage.getItem('bc_animals');
+  if(savedCsv){animals=JSON.parse(savedCsv)}
+  applyLang(); updateCounts();
+  document.getElementById('csvFile').onchange=loadAnimalFile;
+  document.getElementById('animalCam').onchange=e=>onAnimalPhoto(e.target.files[0]);
+  document.getElementById('deviceCam').onchange=e=>onDevicePhoto(e.target.files[0]);
+  document.getElementById('animalSearch').oninput=onAnimalSearch;
+  document.getElementById('importFile').onchange=importJSON;
+};
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2500)}
+function digits(s){return (s||'').replace(/\D/g,'')}
+function todayStr(){return document.getElementById('workDate').value||new Date().toISOString().slice(0,10)}
+
+/* ================= 개체 파일 로딩 ================= */
+function loadAnimalFile(e){
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      let hi=rows.findIndex(r=>r&&r.some(c=>String(c).includes('개체식별번호')));
+      if(hi<0){toast('개체식별번호 column not found');return}
+      const hdr=rows[hi].map(c=>String(c||''));
+      const ci=hdr.findIndex(c=>c.trim()==='개체식별번호');
+      const cm=hdr.findIndex(c=>c.includes('개체관리번호'));
+      animals=[];
+      for(let i=hi+1;i<rows.length;i++){
+        const id=rows[i]&&rows[i][ci]?String(rows[i][ci]).trim():'';
+        if(!id)continue;
+        animals.push({id,idDigits:digits(id),mgmt:cm>=0&&rows[i][cm]?String(rows[i][cm]).trim():''});
+      }
+      localStorage.setItem('bc_animals',JSON.stringify(animals));
+      updateFileInfo(); updateCounts();
+      toast(T('fileLoaded')(animals.length));
+    }catch(err){toast('File error: '+err.message)}
+  };
+  rd.readAsArrayBuffer(f);
+}
+function updateFileInfo(){
+  document.getElementById('fileInfo').textContent=animals.length?T('fileLoaded')(animals.length):T('noFile');
+}
+function updateCounts(){
+  const td=todayStr();
+  document.getElementById('cntToday').textContent=records.filter(r=>r.date===td).length;
+  document.getElementById('cntTotal').textContent=records.length;
+  document.getElementById('cntAnimals').textContent=animals.length||'-';
+}
+
+/* ================= 탭 ================= */
+function showTab(t){
+  document.getElementById('pgInstall').classList.toggle('hidden',t!=='install');
+  document.getElementById('pgManage').classList.toggle('hidden',t!=='manage');
+  document.getElementById('tabInstall').classList.toggle('on',t==='install');
+  document.getElementById('tabManage').classList.toggle('on',t==='manage');
+  if(t==='manage'){page=1;renderList()}
+}
+
+/* ================= 사진 처리 ================= */
+function resizeImg(file,max){return new Promise(res=>{
+  const img=new Image();
+  img.onload=()=>{
+    let w=img.width,h=img.height;
+    if(Math.max(w,h)>max){const k=max/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    res(cv);
+  };
+  img.src=URL.createObjectURL(file);
+})}
+
+/* ================= 객체: OCR ================= */
+async function onAnimalPhoto(file){
+  if(!file)return;
+  const cv=await resizeImg(file,1280);
+  cur.aPhoto=cv.toDataURL('image/jpeg',0.72);
+  document.getElementById('animalPhotoBox').innerHTML=`<img src="${cur.aPhoto}">`;
+  setAnimal('','');
+  const key=localStorage.getItem('bc_apikey');
+  const msg=document.getElementById('animalMsg');
+  if(!key){msg.className='smsg err';msg.textContent=T('apiKeyMissing');toggleManual('animal',true);return}
+  msg.className='smsg';msg.innerHTML=`<span class="spin"></span>${T('recognizing')}`;
+  try{
+    const b64=cur.aPhoto.split(',')[1];
+    const rsp=await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(key)}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({requests:[{image:{content:b64},features:[{type:'TEXT_DETECTION'}]}]})
+    });
+    const j=await rsp.json();
+    const text=j.responses&&j.responses[0]&&j.responses[0].fullTextAnnotation?j.responses[0].fullTextAnnotation.text:'';
+    if(!text)throw 0;
+    matchAnimalFromText(text);
+  }catch(e){
+    msg.className='smsg err';msg.textContent=T('recogFail');toggleManual('animal',true);
+  }
+}
+function matchAnimalFromText(text){
+  const msg=document.getElementById('animalMsg');
+  const seq=digits(text.replace(/\n/g,' '));
+  // 1) 12자리(002+9) 완전 매칭
+  let m12=null;
+  const re=/002\d{9}/g; let mm;
+  while((mm=re.exec(seq))!==null){m12=mm[0];break}
+  if(m12){
+    if(!animals.length){setAnimal('KOR-002-'+m12.slice(3),'');msg.className='smsg ok';msg.textContent=T('recogOk')+' · '+T('noCsvNote');return}
+    const hit=animals.find(a=>a.idDigits.endsWith(m12));
+    if(hit){setAnimal(hit.id,hit.mgmt);msg.className='smsg ok';msg.textContent=T('recogOk');return}
+    setAnimal('KOR-002-'+m12.slice(3),'',true);
+    msg.className='smsg err';msg.textContent=T('notInCsv');return;
+  }
+  // 2) 큰 글씨 4자리 후보 매칭 (식별번호 뒤에서 5~2번째 자리)
+  if(animals.length){
+    const groups=[...new Set((text.match(/\d{4}/g)||[]))];
+    let cands=[];
+    groups.forEach(g=>{
+      animals.forEach(a=>{
+        const d=a.idDigits;
+        if(d.slice(-5,-1)===g||d.slice(-4)===g)cands.push(a);
+      });
+    });
+    cands=[...new Map(cands.map(a=>[a.id,a])).values()];
+    if(cands.length===1){setAnimal(cands[0].id,cands[0].mgmt);msg.className='smsg ok';msg.textContent=T('recogOk');return}
+    if(cands.length>1){showCandidates(cands);return}
+  }
+  msg.className='smsg err';msg.textContent=T('recogFail');toggleManual('animal',true);
+}
+function showCandidates(cands){
+  const body=document.getElementById('candBody');
+  body.innerHTML=cands.slice(0,20).map(a=>
+    `<div class="cand" onclick="pickCand('${a.id}','${a.mgmt.replace(/'/g,"\\'")}')"><b>${a.id}</b><br><small>${a.mgmt}</small></div>`).join('');
+  document.getElementById('ovCand').classList.add('show');
+}
+function pickCand(id,mgmt){
+  closeOv('ovCand'); setAnimal(id,mgmt);
+  const msg=document.getElementById('animalMsg');msg.className='smsg ok';msg.textContent=T('recogOk');
+}
+function setAnimal(id,mgmt,bad){
+  cur.aId=id;cur.aMgmt=mgmt||'';
+  const el=document.getElementById('animalRes');
+  if(id){el.className='resVal '+(bad?'bad':'ok');el.innerHTML=`${id}${mgmt?`<small>${T('mgmtNoL')}: ${mgmt}</small>`:''}`}
+  else{el.className='resVal';el.innerHTML=`<span>${T('animalNo')}</span>`}
+  checkComplete();
+}
+
+/* 객체 수동 검색 */
+function toggleManual(which,forceOpen){
+  const el=document.getElementById(which+'Manual');
+  if(forceOpen)el.classList.remove('hidden');else el.classList.toggle('hidden');
+  if(which==='animal'&&!el.classList.contains('hidden'))document.getElementById('animalSearch').focus();
+}
+function onAnimalSearch(){
+  const q=this.value.trim(); const box=document.getElementById('animalSugs');
+  if(!q){box.classList.add('hidden');return}
+  if(!animals.length){ // 파일 없으면 직접 입력 허용
+    box.innerHTML=`<div onclick="manualPick('${q.replace(/'/g,'')}','')">"${q}" — ${T('noCsvNote')}</div>`;
+    box.classList.remove('hidden');return;
+  }
+  const ql=q.toLowerCase(), qd=digits(q);
+  const hits=animals.filter(a=>
+    a.id.toLowerCase().includes(ql)||(qd&&a.idDigits.includes(qd))||a.mgmt.toLowerCase().includes(ql)
+  ).slice(0,12);
+  if(!hits.length){box.innerHTML=`<div style="color:var(--red)">${T('notInCsv')}</div>`;box.classList.remove('hidden');return}
+  box.innerHTML=hits.map(a=>`<div onclick="manualPick('${a.id}','${a.mgmt.replace(/'/g,"\\'")}')"><b>${a.id}</b> · ${a.mgmt}</div>`).join('');
+  box.classList.remove('hidden');
+}
+function manualPick(id,mgmt){
+  document.getElementById('animalSugs').classList.add('hidden');
+  document.getElementById('animalSearch').value='';
+  setAnimal(id,mgmt);
+  const msg=document.getElementById('animalMsg');msg.className='smsg ok';msg.textContent=T('recogOk');
+}
+
+/* ================= 디바이스: QR ================= */
+async function onDevicePhoto(file){
+  if(!file)return;
+  const msg=document.getElementById('deviceMsg');
+  msg.className='smsg';msg.innerHTML=`<span class="spin"></span>${T('recognizing')}`;
+  const cv=await resizeImg(file,1280);
+  cur.dPhoto=cv.toDataURL('image/jpeg',0.72);
+  document.getElementById('devicePhotoBox').innerHTML=`<img src="${cur.dPhoto}">`;
+  setDevice('');
+  // 여러 스케일로 QR 시도
+  let code=null;
+  for(const scale of [1,0.6,1.5]){
+    const w=Math.round(cv.width*scale),h=Math.round(cv.height*scale);
+    if(w>2200||w<80)continue;
+    const c2=document.createElement('canvas');c2.width=w;c2.height=h;
+    const ctx=c2.getContext('2d');ctx.drawImage(cv,0,0,w,h);
+    const d=ctx.getImageData(0,0,w,h);
+    code=jsQR(d.data,w,h,{inversionAttempts:'attemptBoth'});
+    if(code)break;
+  }
+  if(code&&code.data){
+    const mac=parseMac(code.data);
+    if(records.some(r=>r.mac===mac)){setDevice(mac,true);msg.className='smsg err';msg.textContent=T('dupDevice');}
+    else{setDevice(mac);msg.className='smsg ok';msg.textContent=T('recogOk');}
+  }else{
+    msg.className='smsg err';msg.textContent=T('qrFail');toggleManual('device',true);
+  }
+}
+function parseMac(s){
+  const m=s.match(/([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}/);
+  if(m)return m[0].toUpperCase().replace(/-/g,':');
+  const hex=s.replace(/[^0-9A-Fa-f]/g,'');
+  if(hex.length===12)return hex.toUpperCase().match(/.{2}/g).join(':');
+  return s.trim();
+}
+function applyDeviceManual(){
+  const v=document.getElementById('deviceInput').value.trim();
+  if(!v)return;
+  const mac=parseMac(v);
+  const msg=document.getElementById('deviceMsg');
+  if(records.some(r=>r.mac===mac)){setDevice(mac,true);msg.className='smsg err';msg.textContent=T('dupDevice');}
+  else{setDevice(mac);msg.className='smsg ok';msg.textContent=T('recogOk');}
+  document.getElementById('deviceInput').value='';
+}
+function setDevice(mac,bad){
+  cur.dMac=mac;
+  const el=document.getElementById('deviceRes');
+  if(mac){el.className='resVal '+(bad?'bad':'ok');el.textContent=mac}
+  else{el.className='resVal';el.innerHTML=`<span>${T('deviceMac')}</span>`}
+  checkComplete();
+}
+function checkComplete(){
+  document.getElementById('btnComplete').disabled=!(cur.aId&&cur.dMac);
+}
+
+/* ================= 저장 ================= */
+async function saveRecord(){
+  if(!cur.aId||!cur.dMac)return;
+  const now=new Date();
+  const rec={
+    date:todayStr(),
+    time:now.toTimeString().slice(0,8),
+    animalId:cur.aId, mgmt:cur.aMgmt, mac:cur.dMac,
+    animalPhoto:cur.aPhoto, devicePhoto:cur.dPhoto,
+    farm:document.getElementById('farmName').value,
+    sub:document.getElementById('subName').value,
+    addr:document.getElementById('address').value
+  };
+  rec.id=await dbAdd(rec);
+  records.push(rec);
+  toast('✓ '+T('saved'));
+  // 초기화
+  cur={aPhoto:null,aId:'',aMgmt:'',dPhoto:null,dMac:''};
+  document.getElementById('animalPhotoBox').textContent=T('tapToShoot');
+  document.getElementById('devicePhotoBox').textContent=T('tapToShoot');
+  setAnimal('','');setDevice('');
+  document.getElementById('animalMsg').textContent='';
+  document.getElementById('deviceMsg').textContent='';
+  document.getElementById('animalManual').classList.add('hidden');
+  document.getElementById('deviceManual').classList.add('hidden');
+  updateCounts();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= 관리 화면 ================= */
+function pages(){return Math.max(1,Math.ceil(records.length/PAGE))}
+function goPage(w){
+  if(w==='first')page=1;else if(w==='last')page=pages();
+  else if(w==='prev')page=Math.max(1,page-1);else page=Math.min(pages(),page+1);
+  renderList();
+}
+function renderList(){
+  const tb=document.getElementById('recBody'); if(!tb)return;
+  page=Math.min(page,pages());
+  const start=(page-1)*PAGE;
+  const ordered=records.slice(start,start+PAGE);
+  if(!records.length){tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--sub);padding:18px">${T('empty')}</td></tr>`}
+  else tb.innerHTML=ordered.map((r,i)=>{
+    const seq=start+i+1;
+    if(editingId===r.id){
+      return `<tr>
+        <td>${seq}</td><td>${r.date}<br>${r.time}</td>
+        <td><input class="editIn" id="edA" value="${r.animalId}"></td>
+        <td><input class="editIn" id="edD" value="${r.mac}"></td>
+        <td><button class="ic" onclick="commitEdit(${r.id})">✅</button><button class="ic" onclick="editingId=null;renderList()">✖</button></td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${seq}</td><td>${r.date}<br>${r.time}</td>
+      <td onclick="editingId=${r.id};renderList()">${r.animalId}${r.mgmt?`<br><small style="color:var(--sub)">${r.mgmt}</small>`:''}</td>
+      <td onclick="editingId=${r.id};renderList()">${r.mac}</td>
+      <td><button class="ic" onclick="showDetail(${r.id})">🔍</button><button class="ic" onclick="delRecord(${r.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('pageInfo').textContent=`${page} / ${pages()}`;
+}
+async function commitEdit(id){
+  const r=records.find(x=>x.id===id); if(!r)return;
+  const na=document.getElementById('edA').value.trim();
+  const nd=parseMac(document.getElementById('edD').value.trim());
+  if(animals.length){
+    const hit=animals.find(a=>a.id===na||a.idDigits===digits(na)||a.mgmt===na);
+    if(hit){r.animalId=hit.id;r.mgmt=hit.mgmt}
+    else{if(!confirm(T('notInCsv')+' OK?'))return; r.animalId=na;}
+  }else r.animalId=na;
+  r.mac=nd;
+  await dbPut(r); editingId=null; renderList(); toast(T('updated'));
+}
+async function delRecord(id){
+  if(!confirm(T('confirmDel')))return;
+  await dbDel(id);
+  records=records.filter(r=>r.id!==id);
+  renderList(); updateCounts();
+}
+function showDetail(id){
+  const r=records.find(x=>x.id===id); if(!r)return;
+  document.getElementById('detailBody').innerHTML=`
+    ${r.animalPhoto?`<div style="font-size:12px;color:var(--sub)">${T('animalPhotoL')}</div><img src="${r.animalPhoto}">`:''}
+    ${r.devicePhoto?`<div style="font-size:12px;color:var(--sub)">${T('devicePhotoL')}</div><img src="${r.devicePhoto}">`:''}
+    <div class="mrow"><b>${T('colAnimal')}</b>${r.animalId}</div>
+    <div class="mrow"><b>${T('mgmtNoL')}</b>${r.mgmt||'-'}</div>
+    <div class="mrow"><b>${T('colDevice')}</b>${r.mac}</div>
+    <div class="mrow"><b>${T('colDateTime')}</b>${r.date} ${r.time}</div>
+    <div class="mrow"><b>${T('farmName')}</b>${r.farm||'-'} ${r.sub||''}</div>`;
+  document.getElementById('ovDetail').classList.add('show');
+}
+function closeOv(id){document.getElementById(id).classList.remove('show')}
+
+/* ================= 내보내기 / 불러오기 ================= */
+function dl(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+function stamp(){return new Date().toISOString().slice(0,19).replace(/[:T]/g,'').slice(0,14)}
+function exportJSON(){
+  const data={app:'BoviCare-Install',version:1,
+    farm:{name:document.getElementById('farmName').value,sub:document.getElementById('subName').value,addr:document.getElementById('address').value},
+    exported:new Date().toISOString(),records};
+  dl(`bovicare_install_${stamp()}.json`,JSON.stringify(data),'application/json');
+}
+function exportCSV(){
+  const rows=[['No','Date','Time','AnimalID','MgmtNo','DeviceMAC','Farm','Sub']];
+  records.forEach((r,i)=>rows.push([i+1,r.date,r.time,r.animalId,r.mgmt,r.mac,r.farm||'',r.sub||'']));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  dl(`bovicare_install_${stamp()}.csv`,csv,'text/csv');
+}
+function importJSON(e){
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=async ev=>{
+    try{
+      const j=JSON.parse(ev.target.result);
+      if(!j.records||!Array.isArray(j.records))throw 0;
+      if(!confirm(T('importConfirm')+` (${j.records.length})`))return;
+      for(const r of j.records){delete r.id;r.id=await dbAdd(r);records.push(r)}
+      renderList();updateCounts();toast('✓ '+T('saved'));
+    }catch(err){toast('Import error')}
+    e.target.value='';
+  };
+  rd.readAsText(f);
+}
+
+/* ================= 설정 ================= */
+function openSettings(){document.getElementById('ovSettings').classList.add('show')}
+function saveSettings(){
+  localStorage.setItem('bc_apikey',document.getElementById('apiKeyInput').value.trim());
+  closeOv('ovSettings');toast('✓');
+}
+</script>
+</body>
+</html>
